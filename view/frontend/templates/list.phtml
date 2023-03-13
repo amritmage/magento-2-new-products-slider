@@ -1,0 +1,129 @@
+<?php
+use Magento\Framework\App\Action\Action;
+
+$helper = $this->helper('Magestar\NewArrivals\Helper\Data');
+$isEnable = $helper->getCfg('general/enable');
+if ($isEnable == 1):
+?>
+    <?php
+        if ($exist = $block->getNewProductCollection()){
+            $productCollection =  $block->getNewProductCollection();
+            $imageType = 'category_page_grid';
+            $showWishlist = true;
+            $showCompare = true;
+            $showDescription = true;
+            $templateType = \Magento\Catalog\Block\Product\ReviewRendererInterface::SHORT_VIEW;
+            $compareHelper = $this->helper('Magento\Catalog\Helper\Product\Compare');
+            $labelHelper = $this->helper('Magestar\NewArrivals\Helper\Data');
+            $labelName = '';
+        }
+    ?>
+    <?php if ($exist): ?>
+        <div class="new-arrivals">
+            <h2><?= $helper->getCfg('general/label'); ?></h2>
+            <div class="new-arrival-content new-arrival-slider owl-carousel owl-theme" id="newproducts">
+                <?php foreach ($productCollection as $_product): ?>
+                <div class="new-arrival-inner">
+                    <a href="<?= $_product->getProductUrl(); ?>">
+                        <?php $isNewProduct = $labelHelper->isNewProduct($_product); ?>
+                        <?php if ($isNewProduct): ?>
+                            <?php if($_product->getProductLabel()): ?>
+                                <div class='new-product new-product-custom' style="display:none;"><?= __($_product->getProductLabel()) ?></div>
+                            <?php else: ?>
+                                <div class='new-product' style="display:none;"><?= __('New') ?></div>
+                            <?php endif; ?>
+                        <?php endif; ?>
+                        <div class="new-arrivals-image">
+                            <img loading="lazy" src="<?php echo $block->getImage($_product, $imageType)->getImageUrl(); ?>" alt="<?php echo $block->escapeHtml($_product->getName()) ?>" />
+                        </div>
+                        <div class="product-details">
+                            <strong class="product-item-name">
+                                <a title="<?= $block->escapeHtml($_product->getName()) ?>"
+                                href="<?= $_product->getProductUrl() ?>"
+                                class="product-item-link">
+                                    <?php echo $block->escapeHtml($_product->getName()) ?>
+                                </a>
+                            </strong>
+
+                            <?= $block->getReviewsSummaryHtml($_product, $templateType) ?>
+
+                            <?= $block->getProductPrice($_product); ?>
+
+                            <div class="product actions product-item-actions">
+                                <div class="actions-primary">
+                                    <?php if ($_product->isSaleable()): ?>
+                                        <?php $postParams = $block->getAddToCartPostParams($_product); ?>
+                                        <form data-role="tocart-form" data-product-sku="<?=  /* @NoEscape */ $_product->getSku() ?>" action="<?= /* @NoEscape */ $postParams['action'] ?>" method="post">
+                                            <input type="hidden" name="product" value="<?= /* @escapeNotVerified */ $postParams['data']['product'] ?>">
+                                            <input type="hidden" name="<?= /* @escapeNotVerified */ Action::PARAM_NAME_URL_ENCODED ?>" value="<?= /* @escapeNotVerified */ $postParams['data'][Action::PARAM_NAME_URL_ENCODED] ?>">
+                                            <?= $block->getBlockHtml('formkey') ?>
+                                            <button type="submit"
+                                                    title="<?= $block->escapeHtml(__('Add to Cart')) ?>"
+                                                    class="action tocart primary">
+                                                <span><?= /* @escapeNotVerified */ __('Add to Cart') ?></span>
+                                            </button>
+                                        </form>
+                                    <?php else: ?>
+                                        <?php if ($_product->isAvailable()): ?>
+                                            <div class="stock available"><span><?= /* @escapeNotVerified */ __('In stock') ?></span></div>
+                                        <?php else: ?>
+                                            <div class="stock unavailable"><span><?= /* @escapeNotVerified */ __('Out of stock') ?></span></div>
+                                        <?php endif; ?>
+                                    <?php endif; ?>
+                                </div>
+                                <div class="actions-secondary addto-links addto-links-icons addto-onimage onhover" data-role="add-to-links">
+                                    <?php if ($this->helper('Magento\Wishlist\Helper\Data')->isAllow()): ?>
+                                        <a href="#" data-post='<?php echo $block->getAddToWishlistParams($_product); ?>' class="action towishlist" data-action="add-to-wishlist" title="<?php echo __('Add to Wish List') ?>">
+                                            <span class="icon ib ib-hover ic ic-heart "></span>
+                                            <span><?php echo __('Add to Wish List') ?></span>
+                                        </a>
+                                    <?php endif; ?>
+                                    <a href="#" class="action tocompare"
+                                       data-post='<?php echo $compareHelper->getPostDataParams($_product);?>'
+                                       data-role="add-to-links"
+                                       title="<?php echo __('Add to Compare'); ?>">
+                                        <span class="icon ib ib-hover ic ic-compare "></span>
+                                        <span><?php echo __('Add to Compare') ?></span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
+
+        <script type="text/x-magento-init">
+        {
+            "[data-role=tocart-form], .form.map.checkout": {
+                "catalogAddToCart": {}
+            }
+        }
+        </script>
+
+        <script type="text/javascript" xml="space">
+            require(['jquery', 'owlcarousel'], function ($) {
+                jQuery(document).ready(function () {
+                    jQuery("#newproducts").owlCarousel({
+                        loop: true,
+                        margin: 20,
+                        nav: false,
+                        dots: false,
+                        responsive: {
+                            0: {
+                                items: 2
+                            },
+                            600: {
+                                items: 3
+                            },
+                            1000: {
+                                items: 4
+                            }
+                        }
+                    });
+                });
+            });
+        </script>
+    <?php endif; ?>
+<?php endif; ?>
